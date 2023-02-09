@@ -37,8 +37,8 @@ if __name__ == '__main__':
     env = GridEnvironment(map)
     agent = DynamicalSystem(vstates, vactions, -2, 2)
     algorithm = {
-        'Q': QLearning(initial_state, final_state, agent, env, 100000, 1, 0.95, 0.1, False),
-        'SARSA': SARSA(initial_state, final_state, agent, env, 100000, 1, 0.95, 0.1, 0.99, False)
+        'Q': QLearning(initial_state, final_state, agent, env, 100000, 0.9, 0.9, 0.1, False),
+        'SARSA': SARSA(initial_state, final_state, agent, env, 100000, 0.5, 0.9, 0.1, False)
     }
 
     try:
@@ -47,7 +47,7 @@ if __name__ == '__main__':
             if cmd[0] == 'map':
                 size = np.shape(map)
                 fig, ax = plt.subplots()
-                fig.canvas.manager.set_window_title('Occuopancy Grid Map')
+                fig.canvas.manager.set_window_title('Occupancy Grid Map')
                 fig.set_size_inches((10, 10))
     
                 ax.set_xlabel(r'$x$ [m]', fontsize=22)
@@ -78,7 +78,6 @@ if __name__ == '__main__':
                 ax.plot(np.arange(np.shape(convgQ)[0]), convgQ, label='Q Learning')
                 ax.plot(np.arange(np.shape(convgQ)[0]), convgSARSA, label=r'SARSA')
                 ax.legend()
-                fig.savefig("img/convergence.svg", dpi=300, bbox_inches = "tight")
                 fig.show()
             elif cmd[0] == 'comparepaths':
                 q, _ = algorithm['Q'].get_policy()
@@ -89,6 +88,7 @@ if __name__ == '__main__':
 
                 size = np.shape(map)
                 ax = fig.add_subplot(gs[0, 0])
+                ax.set_title("Q Learning", verticalalignment='bottom')
                 ax.set_xlabel('x [m]')
                 ax.set_ylabel('y [m]')
                 ax.set_xlabel('x [m]')
@@ -105,6 +105,7 @@ if __name__ == '__main__':
                 ax.plot(q[-1, 0], q[-1, 1], 'r*')
 
                 ax = fig.add_subplot(gs[0, 1])
+                ax.set_title("SARSA", verticalalignment='bottom')
                 ax.set_xlabel('x [m]')
                 ax.set_ylabel('y [m]')
                 ax.set_xlabel('x [m]')
@@ -125,7 +126,7 @@ if __name__ == '__main__':
                 algorithm[cmd[1]].learn()
                 algorithm[cmd[1]].save('models/' + cmd[1])
             elif cmd[0] == 'load':
-                algorithm[cmd[1]].load(cmd[1] + '.npy')
+                algorithm[cmd[1]].load(cmd[2])
             elif cmd[0] == 'plot':
                 path, aseq = algorithm[cmd[1]].get_policy()
                 print(path)

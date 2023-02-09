@@ -5,8 +5,9 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from geometry_msgs.msg import PoseStamped, Quaternion
-from nav_msgs.msg import Path
+from px4_autonomous_interfaces.msg import Trajectory
 from px4_autonomous_interfaces.action import ExecuteTrajectory
+from px4_msgs.msg import TrajectorySetpoint
 from .qlearning import QLearning
 from .util import *
 from .environment import GridEnvironment
@@ -30,7 +31,7 @@ class RestToRest(Node):
 
         initial_state = (0, 0, 0, 0)
         final_state = (11, 0, 0, 0)
-        self.altitude = 5.0
+        self.altitude = 2.5
 
         vstates = generate_states_vector(map, [-2, -1, 0, 1, 2])
         vactions = generate_actions_vector([-1, 0, 1])
@@ -38,8 +39,8 @@ class RestToRest(Node):
         env = GridEnvironment(map)
         agent = DynamicalSystem(vstates, vactions, -2, 2)
         
-        self.qlearning = QLearning((0, 0, 0, 0), (11, 0, 0, 0), agent, env, 1, 0.95, False)
-        self.qlearning.load(os.path.join(get_package_share_directory('rest_to_rest'), 'models/Q.npy'))
+        self.qlearning = QLearning((0, 0, 0, 0), (11, 0, 0, 0), agent, env, 0.9, 0.9, 0.1,  False)
+        self.qlearning.load(os.path.join(get_package_share_directory('rest_to_rest'), 'rest_to_rest/models/Q.npy'))
 
         self.execute_path_action = self.declare_parameter('execute_trajectory_action', 'execute_trajectory')
         self.execute_path_action_client = ActionClient(self, ExecuteTrajectory, 'execute_trajectory')
@@ -47,23 +48,23 @@ class RestToRest(Node):
     def get_path(self):
         policy = self.qlearning.get_policy()
 
-        quaternion = euler2quat(0, 0, math.pi / 2)
-        orientation = Quaternion(w=quaternion[0], x=quaternion[1], y=quaternion[2], z=quaternion[3])
+        setpoints = []
+        print(policy[0])
+        for i in range(policy[0].shape[0]):
+            s = policy[0][i]
+            a = policy[1][i]
+            setpoint = TrajectorySetpoint()
+            setpoint.position = [float(s[0]), float(s[1]), self.altitude]
+            setpoint.velocity = [float(s[2]), float(s[3]), 0.0]
+            setpoint.acceleration = [float(a[0]), float(a[1]), 0.0]
+            setpoint.yaw = math.pi / 2
+            setpoints.append(setpoint)
         
-        poses = []
-        for s in policy[0]:
-            pose = PoseStamped()
-            pose.pose.position.x = float(s[0])
-            pose.pose.position.y = float(s[1])
-            pose.pose.position.z = self.altitude
-            pose.pose.orientation = orientation
-            poses.append(pose)
-        
-        return Path(poses=poses)
+        return Trajectory(setpoints=setpoints)
 
-    def send_goal(self, path):
+    def send_goal(self, trajectory):
         goal_msg = ExecuteTrajectory.Goal()
-        goal_msg.path = path
+        goal_msg.trajectory = trajectory
 
         self.execute_path_action_client.wait_for_server()
 

@@ -175,6 +175,7 @@ class EnsembleQLearning():
             state, _ = self.agent.transition_state(action)
 
         path.append(state)
+        aseq.append((0, 0))
         
         return np.array(path), np.array(aseq)
 
@@ -183,19 +184,18 @@ class QLearning(EnsembleQLearning):
             super().__init__(1, init_state, final_state, agent, env, ep, alpha, gamma, eps, plot)
     
 class SARSA(EnsembleQLearning):
-    def __init__(self, init_state, final_state, agent, env, ep, alpha, gamma, eps, epsdecay, plot=False):
+    def __init__(self, init_state, final_state, agent, env, ep, alpha, gamma, eps, plot=False):
             super().__init__(1, init_state, final_state, agent, env, ep, alpha, gamma, eps, plot)
 
-            self.epsdecay = epsdecay
+            self.epsdecay = self.eps / self.ep
 
-    def update_Q(self, state, next_state, action, r):
+    def update_Q(self, state, next_state, action, next_action, r):
         row = self.agent.find_state_index(state)
         col = self.agent.find_action_index(action)
 
         futureQ = 0
         if not self.is_terminal(next_state):
             row_next = self.agent.find_state_index(next_state)
-            next_action = self.epsilon_greedy_policy(next_state)
             col_next = self.agent.find_action_index(next_action)
             futureQ = self.Qs[0][row_next, col_next]
 
@@ -208,19 +208,21 @@ class SARSA(EnsembleQLearning):
         er = 0
 
         state = self.agent.get_state()
+        action = self.epsilon_greedy_policy(state)
             
         while not self.is_terminal(state):
-            action = self.epsilon_greedy_policy(state)
             next_state, c = self.agent.transition_state(action)
+            next_action = self.epsilon_greedy_policy(next_state) if not self.is_terminal(next_state) else None
             
             path.append(state)
             aseq.append(action)
             
             r = self.compute_reward(state, next_state) - (c + 1)/10
-            self.update_Q(state, next_state, action, r)
+            self.update_Q(state, next_state, action, next_action, r)
             self.visit[self.agent.find_state_index(state)] += 1
 
             state = next_state
+            action = next_action
 
             er = er + r
 
@@ -241,8 +243,6 @@ class SARSA(EnsembleQLearning):
                 rew.append(er)
 
                 best = er if  er > best else best
-
-                self.eps = self.eps * self.epsdecay
 
                 if self.is_final(terminal_state):
                     path.append(terminal_state)

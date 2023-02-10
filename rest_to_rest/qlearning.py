@@ -145,7 +145,7 @@ class EnsembleQLearning():
 
                 if self.is_final(terminal_state):
                     path.append(terminal_state)
-                    print("Goal reached! Reward: " + str(er - 10) + " Best Reward: " + str(best - 10))
+                    #print("Goal reached! Reward: " + str(er - 10) + " Best Reward: " + str(best - 10))
 
                 if self.plot:
                     self.plot_learning(np.array(path))

@@ -70,7 +70,7 @@ class EnsembleQLearning():
             return self.agent.get_random_action()
         else:
             row = self.agent.find_state_index(state)
-            argmaxQ = np.argmax((np.sum(self.Qs, axis=0) / len(self.Qs))[row])
+            argmaxQ = np.argmax(np.sum(self.Qs, axis=0)[row])
             return self.agent.get_action_by_index(argmaxQ)
 
     def convergence(self):
@@ -145,7 +145,7 @@ class EnsembleQLearning():
 
                 if self.is_final(terminal_state):
                     path.append(terminal_state)
-                    #print("Goal reached! Reward: " + str(er - 10) + " Best Reward: " + str(best - 10))
+                    print("Goal reached! Reward: " + str(er - 10) + " Best Reward: " + str(best - 10))
 
                 if self.plot:
                     self.plot_learning(np.array(path))

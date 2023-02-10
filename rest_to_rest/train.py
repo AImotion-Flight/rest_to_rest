@@ -38,6 +38,7 @@ if __name__ == '__main__':
     agent = DynamicalSystem(vstates, vactions, -2, 2)
     algorithm = {
         'Q': QLearning(initial_state, final_state, agent, env, 100000, 0.9, 0.9, 0.1, False),
+        'DQ': EnsembleQLearning(2, initial_state, final_state, agent, env, 500000, 0.6, 0.7, 0.1, True),
         'SARSA': SARSA(initial_state, final_state, agent, env, 100000, 0.5, 0.9, 0.1, False)
     }
 

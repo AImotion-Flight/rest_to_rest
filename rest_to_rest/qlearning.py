@@ -217,7 +217,7 @@ class SARSA(EnsembleQLearning):
             path.append(state)
             aseq.append(action)
             
-            r = self.compute_reward(state, next_state) - (c + 1)/10
+            r = self.compute_reward(state, next_state) - c/10
             self.update_Q(state, next_state, action, next_action, r)
             self.visit[self.agent.find_state_index(state)] += 1
 

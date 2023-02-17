@@ -7,11 +7,12 @@ from util import *
 from environment import GridEnvironment
 from agent import DynamicalSystem
 from qlearning import *
+from PIL import Image
 
 plt.rcParams.update({
     "text.usetex": True,
-    "font.size": 16,
-    "text.latex.preamble" : r"\usepackage{amsmath}"
+    "font.size": 24,
+    "text.latex.preamble" : r"\usepackage{amsmath}\usepackage{siunitx}\sisetup{per-mode=symbol}"
 })
 
 if __name__ == '__main__':
@@ -74,7 +75,7 @@ if __name__ == '__main__':
  
                 fig, ax = plt.subplots()
                 ax.set_xlabel(r'Episode', fontsize=22)
-                ax.set_ylabel(r'$$\max_a Q(s, a)$$', fontsize=22)
+                ax.set_ylabel(r'$$\max_u Q_k(Z_1, u)$$', fontsize=22)
                 ax.set_yticks(np.arange(-8, 3, 2))
                 ax.set_ylim([-8.5, 2.5])
                 ax.plot(np.arange(np.shape(convgQ)[0]), convgQ, label='Q Learning')
@@ -90,87 +91,112 @@ if __name__ == '__main__':
                 path, aseq = algorithm[cmd[1]].get_policy()
                 print(path)
                 print(aseq)
-                fig = plt.figure('Summary', figsize=(15, 15), tight_layout=True)
+                fig = plt.figure('Summary', figsize=(15, 20), tight_layout=True)
                 gs = gridspec.GridSpec(4, 2)
 
                 size = np.shape(map)
-                ax = fig.add_subplot(gs[0, :])
-                ax.set_xlabel(r'$x$ [m]')
-                ax.set_ylabel(r'$y$ [m]')
-                ax.set_xlabel(r'$x$ [m]')
-                ax.set_ylabel(r'$y$ [m]')
+                ax = fig.add_subplot(gs[0, 0])
+                ax.set_xlabel(r'$x$ [\si{\metre}]')
+                ax.set_ylabel(r'$y$ [\si{\metre}]')
+                ax.set_xlabel(r'$x$ [\si{\metre}]')
+                ax.set_ylabel(r'$y$ [\si{\metre}]')
                 ax.set_xticks(np.arange(0, size[1], 1))
                 ax.set_yticks(np.arange(0, size[0], 1))
                 ax.set_xticks(np.arange(-0.5, size[1], 1), minor=True)
                 ax.set_yticks(np.arange(-0.5, size[0], 1), minor=True)
                 ax.tick_params(which='minor', bottom=False, left=False)
+                ax.tick_params(axis='both', which='major', labelsize=18)
                 ax.grid(which='minor')
                 ax.imshow(map, cmap='gray', origin='lower')
                 ax.plot(path[:, 0], path[:, 1], 'b--')
                 ax.plot(path[0, 0], path[0, 1], 'go')
                 ax.plot(path[-1, 0], path[-1, 1], 'r*')
+
+                img = np.asarray(Image.open('img/rviz.png'))
+                ax = fig.add_subplot(gs[0, 1])
+                ax.set_xticks([])
+                ax.set_yticks([])
+                ax.imshow(img)
                 
+                measurements = np.load('/home/bencic/measurements.npy')
+                pos = measurements[0]
+                vel = measurements[1]
+                acc = measurements[2]
+                size = pos.shape[0]
+
                 ax = fig.add_subplot(gs[1, 0])
-                ax.set_xlabel(r'$t$ [step]')
-                ax.set_ylabel(r'$x$ [m]')
+                ax.set_xlabel(r'$t$ [\si{\second}]')
+                ax.set_ylabel(r'$x$ [\si{\metre}]')
                 ax.set_xticks(np.arange(0, 15, 1))
                 ax.set_yticks(np.arange(0, 15, 2))
                 ax.set_xlim([-0.5, 14.5])
                 ax.set_ylim([-0.5, 14.5])
                 #ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-                ax.plot(np.arange(np.shape(path)[0]), path[:, 0])
+                ax.plot(np.arange(np.shape(path)[0]), path[:, 0], label='ITG')
+                ax.plot(np.linspace(0, 14, size), pos[:, 0], label='UAV Response')
+                ax.legend(prop={'size': 18})
                 
                 ax = fig.add_subplot(gs[1, 1])
-                ax.set_xlabel(r'$t$ [step]')
-                ax.set_ylabel(r'$y$ [m]')
+                ax.set_xlabel(r'$t$ [\si{\second}]')
+                ax.set_ylabel(r'$y$ [\si{\metre}]')
                 ax.set_xticks(np.arange(0, 15, 1))
                 ax.set_yticks(np.arange(0, 15, 2))
                 ax.set_xlim([-0.5, 14.5])
                 ax.set_ylim([-0.5, 14.5])
                 #ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-                ax.plot(np.arange(np.shape(path)[0]), path[:, 1])
+                ax.plot(np.arange(np.shape(path)[0]), path[:, 1], label='ITG')
+                ax.plot(np.linspace(0, 14, size), pos[:, 1], label='UAV Response')
+                ax.legend(prop={'size': 18})
                 
                 ax = fig.add_subplot(gs[2, 0])
-                ax.set_xlabel(r'$t$ [step]')
-                ax.set_ylabel(r'$u$ [m/step]')
+                ax.set_xlabel(r'$t$ [\si{\second}]')
+                ax.set_ylabel(r'$v_x$ [\si{\metre\per\second}]')
                 ax.set_xticks(np.arange(0, 15, 1))
                 ax.set_yticks(np.arange(-2, 3, 1))
                 ax.set_xlim([-0.5, 14.5])
                 ax.set_ylim([-2.5, 2.5])
                 #ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-                ax.plot(np.arange(np.shape(path)[0]), path[:, 2])
+                ax.plot(np.arange(np.shape(path)[0]), path[:, 2], label='ITG')
+                ax.plot(np.linspace(0, 14, size), vel[:, 0], label='UAV Response')
+                ax.legend(prop={'size': 18})
 
                 ax = fig.add_subplot(gs[2, 1])
-                ax.set_xlabel(r'$t$ [step]')
-                ax.set_ylabel(r'$v$ [m/step]')
+                ax.set_xlabel(r'$t$ [\si{\second}]')
+                ax.set_ylabel(r'$v_y$ [\si{\metre\per\second}]')
                 ax.set_xticks(np.arange(0, 15, 1))
                 ax.set_yticks(np.arange(-2, 3, 1))
                 ax.set_xlim([-0.5, 14.5])
                 ax.set_ylim([-2.5, 2.5])
                 #ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-                ax.plot(np.arange(np.shape(path)[0]), path[:, 3])
+                ax.plot(np.arange(np.shape(path)[0]), path[:, 3], label='ITG')
+                ax.plot(np.linspace(0, 14, size), vel[:, 1], label='UAV Response')
+                ax.legend(prop={'size': 18})
 
                 ax = fig.add_subplot(gs[3, 0])
-                ax.set_xlabel(r'$t$ [step]')
-                ax.set_ylabel(r'$u_{x}$ [m/step]')
+                ax.set_xlabel(r'$t$ [\si{\second}]')
+                ax.set_ylabel(r'$u_{x}$ [\si{\metre\per\second\squared}]')
                 ax.set_xlim([-0.5, 14.5])
                 ax.set_ylim([-1.5, 1.5])
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-                ax.plot(np.arange(np.shape(aseq)[0]), aseq[:, 0])
+                ax.plot(np.arange(np.shape(aseq)[0]), aseq[:, 0], label='ITG')
+                ax.plot(np.linspace(0, 14, size), acc[:, 0], label='UAV Response')
+                ax.legend(prop={'size': 18})
 
                 ax = fig.add_subplot(gs[3, 1])
-                ax.set_xlabel(r'$t$ [step]')
-                ax.set_ylabel(r'$u_{y}$ [m/step]')
+                ax.set_xlabel(r'$t$ [\si{\second}]')
+                ax.set_ylabel(r'$u_{y}$ [\si{\metre\per\second\squared}]')
                 ax.set_xlim([-0.5, 14.5])
                 ax.set_ylim([-1.5, 1.5])
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-                ax.plot(np.arange(np.shape(aseq)[0]), aseq[:, 1])
+                ax.plot(np.arange(np.shape(aseq)[0]), aseq[:, 1], label='ITG')
+                ax.plot(np.linspace(0, 14, size), acc[:, 1], label='UAV Response')
+                ax.legend(prop={'size': 18})
 
                 fig.show()
             elif cmd[0] == "exit":

@@ -18,6 +18,18 @@ import matplotlib.gridspec as gridspec
 import matplotlib.ticker as ticker
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 
+def polyx_fourth(t):
+    return 0.0013 * t**4 - 0.0629 * t**3 + 0.8751 * t**2 - 2.8376 * t + 2.2531
+
+def polyy_fourth(t):
+    return 0.0024 * t**4 - 0.0641 * t**3 + 0.3837 * t**2 + 0.7598 * t - 1.2001
+
+def polyx_third(t):
+    return -0.0211 * t**3 + 0.4353 * t**2 - 1.1507 * t + 0.5172
+
+def polyy_third(t):
+    return 0.0116 * t**3 - 0.4133 * t**2 + 3.8168 * t - 4.3458
+
 class RestToRest(Node):
     def __init__(self):
         super().__init__('rest_to_rest')
@@ -74,17 +86,36 @@ class RestToRest(Node):
             self.acc.append((state.ay, state.ax))
 
     def get_path(self):
-        policy = self.qlearning.get_policy()
+        policy = self.qlearning.get_policy()       
 
         setpoints = []
         print(policy[0])
         for i in range(policy[0].shape[0]):
             s = policy[0][i]
             a = policy[1][i]
+            #x = policy[0][i]
+            #y = policy[1][i]
             setpoint = TrajectorySetpoint()
             setpoint.position = [float(s[0]), float(s[1]), self.altitude]
-            setpoint.velocity = [float(s[2]), float(s[3]), 0.0]
-            setpoint.acceleration = [float(a[0]), float(a[1]), 0.0]
+            #setpoint.velocity = [float(s[2]), float(s[3]), 0.0]
+            #setpoint.acceleration = [float(a[0]), float(a[1]), 0.0]
+            setpoint.yaw = math.pi / 2
+            setpoints.append(setpoint)
+        
+        return Trajectory(setpoints=setpoints)
+
+    def get_polynomial_path(self):
+        policy = np.array((polyx_fourth(np.linspace(0, 14, 150)), polyy_fourth(np.linspace(0, 14, 150))))
+
+        setpoints = []
+        print(policy[0])
+        for i in range(policy[0].shape[0]):
+            x = policy[0][i]
+            y = policy[1][i]
+            setpoint = TrajectorySetpoint()
+            setpoint.position = [float(x), float(y), self.altitude]
+            #setpoint.velocity = [float(s[2]), float(s[3]), 0.0]
+            #setpoint.acceleration = [float(a[0]), float(a[1]), 0.0]
             setpoint.yaw = math.pi / 2
             setpoints.append(setpoint)
         
@@ -184,8 +215,8 @@ class RestToRest(Node):
         ax = fig.add_subplot(gs[2, 0])
         ax.set_xlabel(r'$t$ [step]')
         ax.set_ylabel(r'$u_{x}$ [m/step]')
-        ax.set_xlim([-0.5, 14.5])
-        ax.set_ylim([-1.5, 1.5])
+        #ax.set_xlim([-0.5, 14.5])
+        #ax.set_ylim([-1.5, 1.5])
         #ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         ax.plot(np.linspace(0, 14, size), acc[:, 0])
@@ -193,8 +224,8 @@ class RestToRest(Node):
         ax = fig.add_subplot(gs[2, 1])
         ax.set_xlabel(r'$t$ [step]')
         ax.set_ylabel(r'$u_{y}$ [m/step]')
-        ax.set_xlim([-0.5, 14.5])
-        ax.set_ylim([-1.5, 1.5])
+        #ax.set_xlim([-0.5, 14.5])
+        #ax.set_ylim([-1.5, 1.5])
         #ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         #ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         ax.plot(np.linspace(0, 14, size), acc[:, 1])
@@ -206,7 +237,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     trajectory_generator = RestToRest()
-    trajectory = trajectory_generator.get_path()
+    trajectory = trajectory_generator.get_polynomial_path()
     trajectory_generator.send_goal(trajectory)
     rclpy.spin(trajectory_generator)
 

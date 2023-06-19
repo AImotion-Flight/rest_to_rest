@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def generate_states_vector(map, vels):
+def generate_states_vector(map_width, map_height, vels):
     states = np.empty((0, 4), dtype='int')
-    for i in range(np.shape(map)[1]):
-        for h in range(np.shape(map)[0]):
+    for i in range(map_width):
+        for h in range(map_height):
             for _, j in enumerate(vels):
                 for _, k in enumerate(vels):
                     states = np.vstack((states, (i, h, j, k)))

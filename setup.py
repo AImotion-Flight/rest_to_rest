@@ -10,7 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/' + package_name + '/models', [package_name + '/models/Q.npy', package_name + '/models/SARSA.npy'])
+        ('share/' + package_name + '/' + package_name + '/models', [package_name + '/models/Q.npy'])
     ],
     install_requires=['setuptools'],
     zip_safe=True,

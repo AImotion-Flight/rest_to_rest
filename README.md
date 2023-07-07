@@ -6,7 +6,8 @@ generation with Q-Learning as described in "Rest-to-Rest Trajectory Generation w
 To run this node you need to follow the instructions at [px_autonomous](https://github.com/AImotion-Flight/px4_autonomous)
 to setup the basic ROS2 PX4 SITL Offboard control.
 
-After that the node can be started with:
-```
+After that the node can be built and started with:
+```bash
+colcon build # don't use --symlink-install  
 ros2 run rest_to_rest rest_to_rest
 ```

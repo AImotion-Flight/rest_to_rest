@@ -8,6 +8,6 @@ to setup the basic ROS2 PX4 SITL Offboard control.
 
 After that the node can be built and started with:
 ```bash
-colcon build # don't use --symlink-install  
+colcon build
 ros2 run rest_to_rest rest_to_rest
 ```

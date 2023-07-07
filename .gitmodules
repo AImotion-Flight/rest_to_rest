@@ -1,0 +1,3 @@
+[submodule "rest_to_rest/itg"]
+	path = rest_to_rest/itg
+	url = git@github.com:AImotion-Flight/itg.git

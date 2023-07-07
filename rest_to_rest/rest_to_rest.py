@@ -4,19 +4,13 @@ from ament_index_python.packages import get_package_share_directory
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
-from geometry_msgs.msg import PoseStamped, Quaternion
 from px4_autonomous_interfaces.msg import Trajectory
 from px4_autonomous_interfaces.action import ExecuteTrajectory
-from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition
-from .qlearning import QLearning
-from .util import *
-from .environment import GridEnvironment
-from .agent import DynamicalSystem
-from transforms3d.euler import euler2quat
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import matplotlib.ticker as ticker
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
+from px4_msgs.msg import TrajectorySetpoint
+from itg.qlearning import QLearning
+from itg.util import generate_actions_vector, generate_states_vector
+from itg.environment import GridEnvironment
+from itg.agent import DynamicalSystem
 
 class RestToRest(Node):
     def __init__(self):
@@ -36,10 +30,9 @@ class RestToRest(Node):
         self.qlearning = QLearning((0, 0, 0, 0), (9, 9, 0, 0), agent, env, 50000, 0.9, 0.9, 0.1, False)
         self.qlearning.load(os.path.join(get_package_share_directory('rest_to_rest'), 'rest_to_rest/models/Q.npy'))
 
-        self.execute_path_action = self.declare_parameter('execute_trajectory_action', 'execute_trajectory')
-        self.execute_path_action_client = ActionClient(self, ExecuteTrajectory, '/uav_1/execute_trajectory')
-
-    def get_trajectory(self):
+        self.execute_path_action_client_1 = ActionClient(self, ExecuteTrajectory, '/uav_1/execute_trajectory')
+        
+    def get_setpoints(self):
         policy = self.qlearning.get_policy()       
 
         setpoints = []
@@ -51,16 +44,24 @@ class RestToRest(Node):
             setpoint.yaw = math.pi / 2
             setpoints.append(setpoint)
         
-        return Trajectory(setpoints=setpoints)
+        return setpoints
 
-    def send_goal(self, trajectory):
+    def send_goal(self, trajectory, uav):
         goal_msg = ExecuteTrajectory.Goal()
         goal_msg.trajectory = trajectory
 
-        self.execute_path_action_client.wait_for_server()
-
-        self.send_goal_future = self.execute_path_action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
-        self.send_goal_future.add_done_callback(self.goal_response_callback)
+        if uav == 1:
+            self.execute_path_action_client_1.wait_for_server()
+            self.send_goal_future = self.execute_path_action_client_1.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
+            self.send_goal_future.add_done_callback(self.goal_response_callback)
+        elif uav == 2:
+            self.execute_path_action_client_2.wait_for_server()
+            self.send_goal_future = self.execute_path_action_client_2.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
+            self.send_goal_future.add_done_callback(self.goal_response_callback)
+        elif uav == 3:
+            self.execute_path_action_client_3.wait_for_server()
+            self.send_goal_future = self.execute_path_action_client_3.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
+            self.send_goal_future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
         goal_handle = future.result()
@@ -88,10 +89,9 @@ def main(args=None):
     rclpy.init(args=args)
 
     trajectory_generator = RestToRest()
-    trajectory = trajectory_generator.get_trajectory()
-    trajectory_generator.send_goal(trajectory)
+    setpoints = trajectory_generator.get_setpoints()
+    trajectory_generator.send_goal(Trajectory(setpoints=setpoints), 1)
     rclpy.spin(trajectory_generator)
-
 
 if __name__ == '__main__':
     main()

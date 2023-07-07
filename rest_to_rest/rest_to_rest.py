@@ -1,5 +1,6 @@
 import os
 import math
+import numpy as np
 from ament_index_python.packages import get_package_share_directory
 import rclpy
 from rclpy.node import Node
@@ -7,10 +8,10 @@ from rclpy.action import ActionClient
 from px4_autonomous_interfaces.msg import Trajectory
 from px4_autonomous_interfaces.action import ExecuteTrajectory
 from px4_msgs.msg import TrajectorySetpoint
-from itg.qlearning import QLearning
-from itg.util import generate_actions_vector, generate_states_vector
-from itg.environment import GridEnvironment
-from itg.agent import DynamicalSystem
+from .itg.qlearning import QLearning
+from .itg.util import generate_actions_vector, generate_states_vector
+from .itg.environment import GridEnvironment
+from .itg.agent import DynamicalSystem
 
 class RestToRest(Node):
     def __init__(self):
